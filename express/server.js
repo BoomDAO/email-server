@@ -10,39 +10,6 @@ require('dotenv').config();
 const router = express.Router();
 let reqCache = {};
 
-async function checkIfResultCached(req, res) {
-  if (reqCache[req.get("x-idempotent-key") + "hasStarted"] != null) {
-    let waitingForResult = true;
-    while (waitingForResult) {
-      let cachedSuccess = reqCache[req.get("x-idempotent-key") + "success"];
-      let cachedError = reqCache[req.get("x-idempotent-key") + "error"];
-
-      if (cachedSuccess != null) {
-        waitingForResult = false;
-        res.send(cachedSuccess);
-        return true;
-      } else if (cachedError != null) {
-        waitingForResult = false;
-        return true;
-      }
-
-      // Sleep for 25 ms then check again
-      await sleep(25);
-
-      function sleep(ms) {
-        return new Promise((resolve) => {
-          setTimeout(resolve, ms);
-        });
-      }
-    }
-
-    return true;
-  } else {
-    reqCache[req.get("x-idempotent-key") + "hasStarted"] = "started";
-    return false;
-  }
-}
-
 router.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.write('<h1>Hello, Email Verifier!</h1>');
@@ -62,8 +29,11 @@ router.post("/verify", async function (req, res) {
     res.send({msg : 'request not valid'});
   };
 
-  if (await checkIfResultCached(req, res)) {
-    res.send({msg: "ignored"});
+  if (reqCache[req.headers['x-idempotent-key']] == null) {
+    reqCache[req.headers['x-idempotent-key']] = "true";
+  } else {
+    res.send({msg : "ignored"});
+    return;
   }
 
   const apiKey = `${process.env.SENDGRID_API_KEY}`;
