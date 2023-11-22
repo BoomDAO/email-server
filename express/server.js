@@ -17,7 +17,7 @@ router.get('/', (req, res) => {
 });
 
 router.post("/post-check", function (req, res) {
-  res.send({msg : 'server check passed'});
+  res.send({ msg: 'server check passed' });
 });
 
 router.post("/verify", async function (req, res) {
@@ -25,36 +25,34 @@ router.post("/verify", async function (req, res) {
   var otp = req.headers['otp'];
   var auth = req.headers['authorization'];
   var auth_key = `${process.env.AUTH}`;
-  if(auth != auth_key) {
-    res.send({msg : 'request not valid'});
+  if (auth != auth_key) {
+    res.send({ msg: 'request not valid' });
   };
-
-  if (reqCache[req.headers['x-idempotent-key']] == null) {
-    reqCache[req.headers['x-idempotent-key']] = "true";
+  if (reqCache[email + otp] == null) {
+    reqCache[email + otp] = "true";
+    const apiKey = `${process.env.SENDGRID_API_KEY}`;
+    sgMail.setApiKey(apiKey)
+    const msg = {
+      to: email,
+      from: 'hiteshtripathi12345678@gmail.com',
+      subject: 'OTP for BOOM DAO OG Member Verification',
+      text: 'OTP Verification',
+      html: '<strong>Hello ' + email + ', Here is your OTP : ' + otp + ' for verification. Do not share this with anyone.</strong>',
+    }
+    await sgMail
+      .send(msg)
+      .then(() => {
+        reqCache[req.get("x-idempotence-key") + "success"] = "done";
+        res.send({ msg: 'email sent successfully.' });
+      })
+      .catch((error) => {
+        reqCache[req.get("x-idempotence-key") + "error"] = error;
+        res.send(error);
+      })
   } else {
-    res.send({msg : "ignored"});
+    res.send({ msg: "ignored" });
     return;
   }
-
-  const apiKey = `${process.env.SENDGRID_API_KEY}`;
-  sgMail.setApiKey(apiKey)
-  const msg = {
-    to: email,
-    from: 'hiteshtripathi12345678@gmail.com',
-    subject: 'OTP for BOOM DAO OG Member Verification',
-    text: 'OTP Verification',
-    html: '<strong>Hello ' + email + ', Here is your OTP : ' + otp + ' for verification. Do not share this with anyone.</strong>',
-  }
-  await sgMail
-    .send(msg)
-    .then(() => {
-      reqCache[req.get("x-idempotence-key") + "success"] = "done";
-      res.send({msg : 'email sent successfully.'});
-    })
-    .catch((error) => {
-      reqCache[req.get("x-idempotence-key") + "error"] = error;
-      res.send(error);
-    })
 });
 
 app.use(bodyParser.json());
