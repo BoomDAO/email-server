@@ -14,6 +14,10 @@ router.get('/', (req, res) => {
   res.end();
 });
 
+router.post("/post-check", function (req, res) {
+  res.send({msg : 'server check passed'});
+});
+
 router.post("/verify", async function (req, res) {
   var email = req.headers['email'];
   var otp = req.headers['otp'];
@@ -29,7 +33,7 @@ router.post("/verify", async function (req, res) {
   await sgMail
     .send(msg)
     .then(() => {
-      res.send("Email sent.");
+      res.send({msg : 'email sent successfully.'});
     })
     .catch((error) => {
       console.error(error);
