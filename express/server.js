@@ -21,6 +21,11 @@ router.post("/post-check", function (req, res) {
 router.post("/verify", async function (req, res) {
   var email = req.headers['email'];
   var otp = req.headers['otp'];
+  var auth = req.headers['authorization'];
+  var auth_key = `${process.env.AUTH}`;
+  if(auth != auth_key) {
+    res.send({msg : 'request not valid'});
+  };
   const apiKey = `${process.env.SENDGRID_API_KEY}`;
   sgMail.setApiKey(apiKey)
   const msg = {
