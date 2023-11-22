@@ -5,6 +5,7 @@ const path = require('path');
 const serverless = require('serverless-http');
 const app = express();
 const bodyParser = require('body-parser');
+require('dotenv').config();
 
 const router = express.Router();
 router.get('/', (req, res) => {
@@ -16,8 +17,8 @@ router.get('/', (req, res) => {
 router.post("/verify", async function (req, res) {
   var email = req.headers['email'];
   var otp = req.headers['otp'];
-
-  sgMail.setApiKey('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')
+  const apiKey = `${process.env.SENDGRID_API_KEY}`;
+  sgMail.setApiKey(apiKey)
   const msg = {
     to: email,
     from: 'hiteshtripathi12345678@gmail.com',
