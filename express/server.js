@@ -49,11 +49,9 @@ router.post("/verify", async function (req, res) {
     await sgMail
       .send(msg)
       .then(() => {
-        reqCache[req.get("x-idempotence-key") + "success"] = "done";
         res.send({ msg: 'email sent successfully.' });
       })
       .catch((error) => {
-        reqCache[req.get("x-idempotence-key") + "error"] = error;
         res.send(error);
       })
   } else {
