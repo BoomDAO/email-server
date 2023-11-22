@@ -10,6 +10,12 @@ require('dotenv').config();
 const router = express.Router();
 let reqCache = {};
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 router.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.write('<h1>Hello, Email Verifier!</h1>');
@@ -28,6 +34,7 @@ router.post("/verify", async function (req, res) {
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
+  await sleep(1000);
   if (reqCache[email + otp] == null) {
     reqCache[email + otp] = "true";
     const apiKey = `${process.env.SENDGRID_API_KEY}`;
