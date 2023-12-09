@@ -16,6 +16,35 @@ function sleep(ms) {
   });
 }
 
+async function checkIfResultCached(req, res) {
+  if (reqCache[req.get("x-idempotence-key") + "hasStarted"] != null) {
+    let waitingForResult = true;
+    while (waitingForResult) {
+      let cachedSuccess = reqCache[req.get("x-idempotence-key") + "success"];
+      let cachedError = reqCache[req.get("x-idempotence-key") + "error"];
+      if (cachedSuccess != null) {
+        waitingForResult = false;
+        res.send(cachedSuccess);
+        return true;
+      } else if (cachedError != null) {
+        waitingForResult = false;
+        return true;
+      }
+      // Sleep for 25 ms then check again
+      await sleep(25);
+      function sleep(ms) {
+        return new Promise((resolve) => {
+          setTimeout(resolve, ms);
+        });
+      }
+    }
+    return true;
+  } else {
+    reqCache[req.get("x-idempotence-key") + "hasStarted"] = "started";
+    return false;
+  }
+}
+
 router.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.write('<h1>Hello, Email Verifier!</h1>');
@@ -26,7 +55,7 @@ router.post("/post-check", function (req, res) {
   res.send({ msg: 'server check passed' });
 });
 
-router.post("/checked-cache", function (req, res) {
+router.post("/check-cache", function (req, res) {
   res.send(reqCache);
 });
 
@@ -38,9 +67,10 @@ router.post("/verify", async function (req, res) {
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
-  await sleep(5000);
-  if (reqCache[email + otp] == null) {
-    reqCache[email + otp] = "true";
+  try {
+    if (await checkIfResultCached(req, res)) {
+      return;
+    }
     const apiKey = `${process.env.SENDGRID_API_KEY}`;
     sgMail.setApiKey(apiKey)
     const msg = {
@@ -50,6 +80,7 @@ router.post("/verify", async function (req, res) {
       text: 'OTP Verification',
       html: '<strong>Hello ' + email + ', Here is your OTP : ' + otp + ' for verification. Do not share this with anyone.</strong>',
     }
+    reqCache[req.get("x-idempotence-key") + "success"] = true;
     await sgMail
       .send(msg)
       .then(() => {
@@ -58,9 +89,9 @@ router.post("/verify", async function (req, res) {
       .catch((error) => {
         res.send(error);
       })
-  } else {
-    res.send({ msg: "ignored" });
-    return;
+  } catch (e) {
+    reqCache[req.get("x-idempotence-key") + "error"] = e; //store the error in the cache
+    console.error(e);
   }
 });
 
