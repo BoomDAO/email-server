@@ -31,7 +31,7 @@ async function checkIfResultCached(req, res) {
         return true;
       }
       // Sleep for 25 ms then check again
-      await sleep(25);
+      await sleep(1000);
       function sleep(ms) {
         return new Promise((resolve) => {
           setTimeout(resolve, ms);
