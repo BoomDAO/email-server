@@ -26,6 +26,10 @@ router.post("/post-check", function (req, res) {
   res.send({ msg: 'server check passed' });
 });
 
+router.post("/checked-cache", function (req, res) {
+  res.send(reqCache);
+});
+
 router.post("/verify", async function (req, res) {
   var email = req.headers['email'];
   var otp = req.headers['otp'];
@@ -34,7 +38,7 @@ router.post("/verify", async function (req, res) {
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
-  await sleep(1000);
+  await sleep(5000);
   if (reqCache[email + otp] == null) {
     reqCache[email + otp] = "true";
     const apiKey = `${process.env.SENDGRID_API_KEY}`;
