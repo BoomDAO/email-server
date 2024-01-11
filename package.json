@@ -14,7 +14,9 @@
   "author": "neverendingqs",
   "dependencies": {
     "@sendgrid/mail": "^7.7.0",
+    "axios": "^1.6.5",
     "dotenv": "^16.3.1",
+    "node-cron": "^3.0.3",
     "webpack": "^5.89.0"
   },
   "devDependencies": {

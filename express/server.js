@@ -5,6 +5,8 @@ const path = require('path');
 const serverless = require('serverless-http');
 const app = express();
 const bodyParser = require('body-parser');
+const cron = require("node-cron"); 
+const axios = require("axios");
 require('dotenv').config();
 
 const router = express.Router();
@@ -93,6 +95,19 @@ router.post("/verify", async function (req, res) {
     console.error(e);
   }
 });
+
+cron.schedule("*/10 * * * * *", async () => { 
+  var auth_key = `${process.env.AUTH}`;
+  let response = await axios.post(
+    "https://imqio-gaaaa-aaaal-adlxa-cai.icp0.io/update-txs-till-date",
+    {},
+    {
+      headers: {
+        key: auth_key,
+      },
+    }
+  );
+}); 
 
 app.use(bodyParser.json());
 app.use('/.netlify/functions/server', router);  // path must route to lambda
