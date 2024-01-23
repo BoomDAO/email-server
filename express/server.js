@@ -54,6 +54,38 @@ router.post("/verify", async function (req, res) {
   }
 });
 
+router.post("/verify-sms", async function (req, res) {
+  var phone = req.headers['phone'];
+  var otp = req.headers['otp'];
+  var auth = req.headers['authorization'];
+  var auth_key = `${process.env.AUTH}`;
+  if (auth != auth_key) {
+    res.send({ msg: 'request not valid' });
+  };
+  try {
+    const twilioSID = `${process.env.TWILIO_ACCOUNT_SID}`;
+    const twilioAuthToken = `${process.env.TWILIO_AUTH_TOKEN}`;
+
+    const client = new require('twilio')(twilioSID, twilioAuthToken);
+
+    const sms_req = {
+      body: 'Hello BOOM Gamer, here is your OTP : ' + otp + '. Do-Not share this with anyone.',
+      from: '+16592254521',
+      to: phone
+    }
+    client.messages
+      .create(sms_req)
+      .then(() => {
+        res.send({ msg: 'sms sent successfully.' });
+      })
+      .catch((error) => {
+        res.send(error);
+      })
+  } catch (e) {
+    console.error(e);
+  }
+});
+
 app.use(bodyParser.json());
 app.use('/.netlify/functions/server', router);  // path must route to lambda
 app.use('/', (req, res) => res.sendFile(path.join(__dirname, '../index.html')));
