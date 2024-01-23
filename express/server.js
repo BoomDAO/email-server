@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.write('<h1>Hello, I am Test Server!</h1>');
+  res.write('<h1>Hello, I am a Test Server.</h1>');
   res.end();
 });
 
@@ -54,39 +54,39 @@ router.post("/verify", async function (req, res) {
   }
 });
 
-router.post("/verify-sms", async function (req, res) {
-  var phone = req.headers['phone'];
-  var otp = req.headers['otp'];
-  var auth = req.headers['authorization'];
-  var auth_key = `${process.env.AUTH}`;
-  if (auth != auth_key) {
-    res.send({ msg: 'request not valid' });
-  };
-  try {
-    const twilioSID = `${process.env.TWILIO_ACCOUNT_SID}`;
-    const twilioAuthToken = `${process.env.TWILIO_AUTH_TOKEN}`;
-    const twilioPhoneNumber = `${process.env.TWILIO_PHONE_NUMBER}`
+// router.post("/verify-sms", async function (req, res) {
+//   var phone = req.headers['phone'];
+//   var otp = req.headers['otp'];
+//   var auth = req.headers['authorization'];
+//   var auth_key = `${process.env.AUTH}`;
+//   if (auth != auth_key) {
+//     res.send({ msg: 'request not valid' });
+//   };
+//   try {
+//     const twilioSID = `${process.env.TWILIO_ACCOUNT_SID}`;
+//     const twilioAuthToken = `${process.env.TWILIO_AUTH_TOKEN}`;
+//     const twilioPhoneNumber = `${process.env.TWILIO_PHONE_NUMBER}`
 
-    const client = new require('twilio')(twilioSID, twilioAuthToken);
+//     const client = twilio(twilioSID, twilioAuthToken);
 
-    const sms_req = {
-      body: 'Hello BOOM Gamer, here is your OTP : ' + otp + '. Do-Not share this with anyone.',
-      from: twilioPhoneNumber,
-      to: phone
-    }
-    client.messages
-      .create(sms_req)
-      .then(() => {
-        res.send({ msg: 'sms sent successfully.' });
-      })
-      .catch((error) => {
-        res.send(error);
-      })
-  } catch (e) {
-    console.error(e);
-    res.send(e);
-  }
-});
+//     const sms_req = {
+//       body: 'Hello BOOM Gamer, here is your OTP : ' + otp + '. Do-Not share this with anyone.',
+//       from: twilioPhoneNumber,
+//       to: phone
+//     }
+//     client.messages
+//       .create(sms_req)
+//       .then(() => {
+//         res.send({ msg: 'sms sent successfully.' });
+//       })
+//       .catch((error) => {
+//         res.send(error);
+//       })
+//   } catch (e) {
+//     console.error(e);
+//     res.send(e);
+//   }
+// });
 
 app.use(bodyParser.json());
 app.use('/.netlify/functions/server', router);  // path must route to lambda
