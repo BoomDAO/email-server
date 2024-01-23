@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.write('<h1>Hello, Email Verifier!</h1>');
+  res.write('<h1>Hello, I am Test Server!</h1>');
   res.end();
 });
 
@@ -65,12 +65,13 @@ router.post("/verify-sms", async function (req, res) {
   try {
     const twilioSID = `${process.env.TWILIO_ACCOUNT_SID}`;
     const twilioAuthToken = `${process.env.TWILIO_AUTH_TOKEN}`;
+    const twilioPhoneNumber = `${process.env.TWILIO_PHONE_NUMBER}`
 
     const client = new require('twilio')(twilioSID, twilioAuthToken);
 
     const sms_req = {
       body: 'Hello BOOM Gamer, here is your OTP : ' + otp + '. Do-Not share this with anyone.',
-      from: '+16592254521',
+      from: twilioPhoneNumber,
       to: phone
     }
     client.messages
@@ -83,6 +84,7 @@ router.post("/verify-sms", async function (req, res) {
       })
   } catch (e) {
     console.error(e);
+    res.send(e);
   }
 });
 
