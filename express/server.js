@@ -36,10 +36,10 @@ router.post("/verify", async function (req, res) {
     sgMail.setApiKey(apiKey)
     const msg = {
       to: email,
-      from: 'hiteshtripathi12345678@gmail.com',
-      subject: 'OTP for BOOM DAO OG Member Verification',
+      from: 'boomdaoxyz@proton.me',
+      subject: 'BOOM DAO email verification',
       text: 'OTP Verification',
-      html: '<strong>Hello ' + email + ', Here is your OTP : ' + otp + ' for verification. Do not share this with anyone.</strong>',
+      html: '<strong>Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.</strong>',
     }
     await sgMail
       .send(msg)
@@ -53,40 +53,6 @@ router.post("/verify", async function (req, res) {
     console.error(e);
   }
 });
-
-// router.post("/verify-sms", async function (req, res) {
-//   var phone = req.headers['phone'];
-//   var otp = req.headers['otp'];
-//   var auth = req.headers['authorization'];
-//   var auth_key = `${process.env.AUTH}`;
-//   if (auth != auth_key) {
-//     res.send({ msg: 'request not valid' });
-//   };
-//   try {
-//     const twilioSID = `${process.env.TWILIO_ACCOUNT_SID}`;
-//     const twilioAuthToken = `${process.env.TWILIO_AUTH_TOKEN}`;
-//     const twilioPhoneNumber = `${process.env.TWILIO_PHONE_NUMBER}`
-
-//     const client = twilio(twilioSID, twilioAuthToken);
-
-//     const sms_req = {
-//       body: 'Hello BOOM Gamer, here is your OTP : ' + otp + '. Do-Not share this with anyone.',
-//       from: twilioPhoneNumber,
-//       to: phone
-//     }
-//     client.messages
-//       .create(sms_req)
-//       .then(() => {
-//         res.send({ msg: 'sms sent successfully.' });
-//       })
-//       .catch((error) => {
-//         res.send(error);
-//       })
-//   } catch (e) {
-//     console.error(e);
-//     res.send(e);
-//   }
-// });
 
 app.use(bodyParser.json());
 app.use('/.netlify/functions/server', router);  // path must route to lambda
