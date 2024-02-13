@@ -33,10 +33,11 @@ router.post("/verify", async function (req, res) {
   };
   try {
     const apiKey = `${process.env.SENDGRID_API_KEY}`;
+    const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
     sgMail.setApiKey(apiKey)
     const msg = {
       to: email,
-      from: 'boomdaoxyz@proton.me',
+      from: fromAddress,
       subject: 'BOOM DAO email verification',
       text: 'OTP Verification',
       html: '<strong>Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.</strong>',
