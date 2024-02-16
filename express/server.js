@@ -89,16 +89,17 @@ router.post("/verify-phone", async function (req, res) {
   const uniqueId = key;
 
   if (reqCache[key] == undefined) {
-    axios.post(url, data, {
-      auth: {
-        username: sid,
-        password: authToken,
-      },
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'I-Twilio-Idempotency-Token': uniqueId,
-      },
-    })
+    try {
+      axios.post(url, data, {
+        auth: {
+          username: sid,
+          password: authToken,
+        },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'I-Twilio-Idempotency-Token': uniqueId,
+        },
+      })
       .then(response => {
         reqCache[key] = true;
         res.send({ msg: 'Message sent successfully' });
@@ -106,6 +107,9 @@ router.post("/verify-phone", async function (req, res) {
       .catch(error => {
         res.send({ msg: 'Message not send' });
       });
+    } catch (e) {
+      res.send(e);
+    }
   } else {
     res.send({ msg: 'Message sent successfully' });
   }
