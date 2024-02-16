@@ -90,7 +90,7 @@ router.post("/verify-phone", async function (req, res) {
 
   if (reqCache[key] == undefined) {
     try {
-      axios.post(url, data, {
+      let response = await axios.post(url, data, {
         auth: {
           username: sid,
           password: authToken,
@@ -99,16 +99,11 @@ router.post("/verify-phone", async function (req, res) {
           'Content-Type': 'application/x-www-form-urlencoded',
           'I-Twilio-Idempotency-Token': uniqueId,
         },
-      })
-      .then(response => {
-        reqCache[key] = true;
-        res.send({ msg: 'Message sent successfully' });
-      })
-      .catch(error => {
-        res.send({ msg: 'Message not send' });
       });
+      res.send({ msg: 'Message sent successfully' });
     } catch (e) {
-      res.send(e);
+      console.log(e);
+      res.send({ msg: "Message not send" });
     }
   } else {
     res.send({ msg: 'Message sent successfully' });
