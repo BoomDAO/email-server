@@ -73,6 +73,7 @@ router.post("/verify-phone", async function (req, res) {
   var otp = req.headers['otp'];
   var key = req.headers['I-Twilio-Idempotency-Token'];
   var auth = req.headers['authorization'];
+  var auth_key = `${process.env.AUTH}`;
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
