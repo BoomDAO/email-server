@@ -12,7 +12,11 @@ const router = express.Router();
 let reqCache = {};
 
 const setCache = async (key) => {
-  reqCache[key] = reqCache[key] + 1;
+  if(reqCache[key] == undefined) {
+    reqCache[key] = 1;
+  }else {
+    reqCache[key] = reqCache[key] + 1;
+  }
 };
 
 router.get('/', (req, res) => {
@@ -31,6 +35,50 @@ router.post("/check-cache", function (req, res) {
 
 router.post("/verify", async function (req, res) {
   var email = req.headers['email'];
+  var otp = req.headers['otp'];
+  var auth = req.headers['authorization'];
+  var idempotentKey = req.headers['x-idempotency-key'];
+  var auth_key = `${process.env.AUTH}`;
+  if (auth != auth_key) {
+    res.send({ msg: 'request not valid' });
+  };
+
+  await setCache(idempotentKey);
+
+  setTimeout(async () => {
+    if (reqCache[idempotentKey] > 0) {
+      reqCache[idempotentKey] = 0;
+      try {
+        const apiKey = `${process.env.SENDGRID_API_KEY}`;
+        const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
+        sgMail.setApiKey(apiKey)
+        const msg = {
+          to: email,
+          from: fromAddress,
+          subject: 'BOOM DAO email verification',
+          text: 'OTP Verification',
+          html: '<strong>Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.</strong>',
+        }
+        await sgMail
+          .send(msg)
+          .then(() => {
+            reqCache[idempotentKey] = 0;
+            res.send({ msg: 'email sent successfully.' });
+          })
+          .catch((error) => {
+            res.send(error);
+          })
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      res.send({ msg: 'email sent successfully.' });
+    }
+  }, 3000);
+});
+
+router.post("/verify-phone", async function (req, res) {
+  var email = req.headers['phone'];
   var otp = req.headers['otp'];
   var auth = req.headers['authorization'];
   var idempotentKey = req.headers['x-idempotency-key'];
