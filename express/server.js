@@ -99,7 +99,7 @@ router.post("/verify-phone", async function (req, res) {
         res.send({ msg: 'Message sent successfully' });
       })
       .catch(error => {
-        res.send(error);
+        res.send({ msg: 'Message not send' });
       });
   } else {
     res.send({ msg: 'Message sent successfully' });
