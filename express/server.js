@@ -71,7 +71,7 @@ router.post("/verify", async function (req, res) {
 router.post("/verify-phone", async function (req, res) {
   var phone = req.headers['to'];
   var otp = req.headers['otp'];
-  var key = req.headers['I-Twilio-Idempotency-Token'];
+  var key = req.headers['i-twilio-idempotency-token'];
   var auth = req.headers['authorization'];
   var auth_key = `${process.env.AUTH}`;
   if (auth != auth_key) {
