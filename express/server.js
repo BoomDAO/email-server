@@ -72,6 +72,10 @@ router.post("/verify-phone", async function (req, res) {
   var phone = req.headers['to'];
   var otp = req.headers['otp'];
   var key = req.headers['I-Twilio-Idempotency-Token'];
+  var auth = req.headers['authorization'];
+  if (auth != auth_key) {
+    res.send({ msg: 'request not valid' });
+  };
   const sid = `${process.env.TWILIO_ACCOUNT_SID}`;
   const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`;
   const from = `${process.env.TWILIO_PHONE_NUMBER}`;
