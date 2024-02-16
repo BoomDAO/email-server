@@ -9,7 +9,11 @@ require('dotenv').config();
 
 const router = express.Router();
 
-let _emails = {};
+let reqCache = {};
+
+const setCache = async (key) => {
+  reqCache[key] = reqCache[key] + 1;
+};
 
 router.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -22,7 +26,7 @@ router.post("/post-check", function (req, res) {
 });
 
 router.post("/check-cache", function (req, res) {
-  res.send(_emails);
+  res.send(reqCache);
 });
 
 router.post("/verify", async function (req, res) {
@@ -34,37 +38,37 @@ router.post("/verify", async function (req, res) {
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
-  if (_emails[idempotentKey] == undefined) {
-    try {
-      const apiKey = `${process.env.SENDGRID_API_KEY}`;
-      const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
-      sgMail.setApiKey(apiKey)
-      const msg = {
-        to: email,
-        from: fromAddress,
-        subject: 'BOOM DAO email verification',
-        text: 'OTP Verification',
-        html: '<strong>Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.</strong>',
-      }
-      if (_emails[idempotentKey] == undefined) {
+
+  await setCache(idempotentKey);
+
+  setTimeout(async () => {
+    if (reqCache[idempotentKey] > 0) {
+      reqCache[idempotentKey] = 0;
+      try {
+        const apiKey = `${process.env.SENDGRID_API_KEY}`;
+        const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
+        sgMail.setApiKey(apiKey)
+        const msg = {
+          to: email,
+          from: fromAddress,
+          subject: 'BOOM DAO email verification',
+          text: 'OTP Verification',
+          html: '<strong>Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.</strong>',
+        }
         await sgMail
           .send(msg)
           .then(() => {
-            _emails[idempotentKey] = true;
+            reqCache[idempotentKey] = 0;
             res.send({ msg: 'email sent successfully.' });
           })
           .catch((error) => {
             res.send(error);
           })
-      } else {
-        res.send({ msg: 'email sent successfully.' });
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
     }
-  } else {
-    res.send({ msg: 'email sent successfully.' });
-  }
+  }, 3000);
 });
 
 app.use(bodyParser.json());
