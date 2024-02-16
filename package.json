@@ -14,7 +14,7 @@
   "author": "neverendingqs",
   "dependencies": {
     "@sendgrid/mail": "^7.7.0",
-    "axios": "^1.6.5",
+    "axios": "^1.6.7",
     "dotenv": "^16.3.1",
     "node-cron": "^3.0.3",
     "twilio": "^4.20.1",

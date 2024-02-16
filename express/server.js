@@ -5,19 +5,12 @@ const path = require('path');
 const serverless = require('serverless-http');
 const app = express();
 const bodyParser = require('body-parser');
+const axios = require('axios');
 require('dotenv').config();
 
 const router = express.Router();
 
 let reqCache = {};
-
-const setCache = async (key) => {
-  if(reqCache[key] == undefined) {
-    reqCache[key] = 1;
-  }else {
-    reqCache[key] = reqCache[key] + 1;
-  }
-};
 
 router.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -42,81 +35,75 @@ router.post("/verify", async function (req, res) {
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
-
-  await setCache(idempotentKey);
-
-  setTimeout(async () => {
-    if (reqCache[idempotentKey] > 0) {
-      reqCache[idempotentKey] = 0;
-      try {
-        const apiKey = `${process.env.SENDGRID_API_KEY}`;
-        const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
-        sgMail.setApiKey(apiKey)
-        const msg = {
-          to: email,
-          from: fromAddress,
-          subject: 'BOOM DAO email verification',
-          text: 'OTP Verification',
-          html: '<strong>Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.</strong>',
-        }
+  if (reqCache[idempotentKey] == undefined) {
+    try {
+      const apiKey = `${process.env.SENDGRID_API_KEY}`;
+      const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
+      sgMail.setApiKey(apiKey)
+      const msg = {
+        to: email,
+        from: fromAddress,
+        subject: 'BOOM DAO email verification',
+        text: 'OTP Verification',
+        html: '<strong>Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.</strong>',
+      }
+      if (reqCache[idempotentKey] == undefined) {
         await sgMail
           .send(msg)
           .then(() => {
-            reqCache[idempotentKey] = 0;
+            reqCache[idempotentKey] = true;
             res.send({ msg: 'email sent successfully.' });
           })
           .catch((error) => {
             res.send(error);
           })
-      } catch (e) {
-        console.error(e);
+      } else {
+        res.send({ msg: 'email sent successfully.' });
       }
-    } else {
-      res.send({ msg: 'email sent successfully.' });
+    } catch (e) {
+      console.error(e);
     }
-  }, 3000);
+  } else {
+    res.send({ msg: 'email sent successfully.' });
+  }
 });
 
 router.post("/verify-phone", async function (req, res) {
-  var email = req.headers['phone'];
+  var phone = req.headers['to'];
   var otp = req.headers['otp'];
-  var auth = req.headers['authorization'];
-  var idempotentKey = req.headers['x-idempotency-key'];
-  var auth_key = `${process.env.AUTH}`;
-  if (auth != auth_key) {
-    res.send({ msg: 'request not valid' });
-  };
+  var key = req.headers['I-Twilio-Idempotency-Token'];
+  const sid = `${process.env.TWILIO_ACCOUNT_SID}`;
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`;
+  const from = `${process.env.TWILIO_PHONE_NUMBER}`;
+  const authToken = `${process.env.TWILIO_AUTH_TOKEN}`;
 
-  await setCache(idempotentKey);
+  const data = new URLSearchParams();
+  data.append('To', phone);
+  data.append('From', from);
+  data.append('Body', "Your BOOM DAO verification code is " + otp + ". Do not share this with anyone.");
+  const uniqueId = key;
 
-  setTimeout(async () => {
-    if (reqCache[idempotentKey] > 0) {
-      reqCache[idempotentKey] = 0;
-      try {
-        const apiKey = `${process.env.SENDGRID_API_KEY}`;
-        const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
-        sgMail.setApiKey(apiKey)
-        const msg = {
-          to: email,
-          from: fromAddress,
-          subject: 'BOOM DAO email verification',
-          text: 'OTP Verification',
-          html: '<strong>Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.</strong>',
-        }
-        await sgMail
-          .send(msg)
-          .then(() => {
-            reqCache[idempotentKey] = 0;
-            res.send({ msg: 'email sent successfully.' });
-          })
-          .catch((error) => {
-            res.send(error);
-          })
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, 3000);
+  if (reqCache[key] == undefined) {
+    axios.post(url, data, {
+      auth: {
+        username: sid,
+        password: authToken,
+      },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'I-Twilio-Idempotency-Token': uniqueId,
+      },
+    })
+      .then(response => {
+        reqCache[key] = true;
+        res.send({ msg: 'Message sent successfully' });
+      })
+      .catch(error => {
+        res.send(error);
+      });
+  } else {
+    res.send({ msg: 'Message sent successfully' });
+  }
 });
 
 app.use(bodyParser.json());
