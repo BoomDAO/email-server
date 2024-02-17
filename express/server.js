@@ -39,7 +39,7 @@ router.post("/verify", async function (req, res) {
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
-  if (reqCache[idempotentKey] >= 8) {
+  if (reqCache[idempotentKey] >= 7) {
     try {
       const apiKey = `${process.env.SENDGRID_API_KEY}`;
       const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
