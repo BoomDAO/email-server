@@ -11,9 +11,10 @@ require('dotenv').config();
 const router = express.Router();
 
 let reqCache = {};
+let success = {};
 
 const upCache = async(key) => {
-  reqCache[key] = (reqCache[key]) ? (reqCache[key] + 1) : 1;
+  reqCache[key] = (reqCache[key] && success[key] == false) ? (reqCache[key] + 1) : 1;
   console.log(key + " : " + reqCache[key]);
 };
 
@@ -56,6 +57,7 @@ router.post("/verify", async function (req, res) {
         .send(msg)
         .then(() => {
           reqCache[idempotentKey] = 0;
+          success[idempotentKey] = true;
           res.send({ msg: 'email sent successfully.' });
         })
         .catch((error) => {
