@@ -14,6 +14,7 @@ let reqCache = {};
 
 const upCache = async(key) => {
   reqCache[key] = (reqCache[key]) ? (reqCache[key] + 1) : 1;
+  console.log(key + " : " + reqCache[key]);
 };
 
 router.get('/', (req, res) => {
@@ -39,7 +40,7 @@ router.post("/verify", async function (req, res) {
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
-  if (reqCache[idempotentKey] >= 6) {
+  if (reqCache[idempotentKey] >= 4) {
     try {
       const apiKey = `${process.env.SENDGRID_API_KEY}`;
       const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
