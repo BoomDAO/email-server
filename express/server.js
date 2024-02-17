@@ -14,7 +14,7 @@ let reqCache = {};
 let success = {};
 
 const upCache = async(key) => {
-  reqCache[key] = (reqCache[key] && success[key] == false) ? (reqCache[key] + 1) : 1;
+  reqCache[key] = (reqCache[key] && success[key] == undefined) ? (reqCache[key] + 1) : 1;
   console.log(key + " : " + reqCache[key]);
 };
 
