@@ -12,6 +12,10 @@ const router = express.Router();
 
 let reqCache = {};
 
+const upCache = async(key) => {
+  reqCache[key] = (reqCache[key]) ? (reqCache[key] + 1) : 1;
+};
+
 router.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.write('<h1>Hello, I am a Test Server.</h1>');
@@ -35,7 +39,7 @@ router.post("/verify", async function (req, res) {
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
-  if (reqCache[idempotentKey] == undefined) {
+  if (reqCache[idempotentKey] >= 8) {
     try {
       const apiKey = `${process.env.SENDGRID_API_KEY}`;
       const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
@@ -47,23 +51,20 @@ router.post("/verify", async function (req, res) {
         text: 'OTP Verification',
         html: '<strong>Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.</strong>',
       }
-      if (reqCache[idempotentKey] == undefined) {
-        await sgMail
-          .send(msg)
-          .then(() => {
-            reqCache[idempotentKey] = true;
-            res.send({ msg: 'email sent successfully.' });
-          })
-          .catch((error) => {
-            res.send(error);
-          })
-      } else {
-        res.send({ msg: 'email sent successfully.' });
-      }
+      await sgMail
+        .send(msg)
+        .then(() => {
+          reqCache[idempotentKey] = 0;
+          res.send({ msg: 'email sent successfully.' });
+        })
+        .catch((error) => {
+          res.send(error);
+        })
     } catch (e) {
       console.error(e);
     }
   } else {
+    await upCache(idempotentKey);
     res.send({ msg: 'email sent successfully.' });
   }
 });
