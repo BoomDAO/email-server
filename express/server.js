@@ -6,6 +6,7 @@ const serverless = require('serverless-http');
 const app = express();
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const courier = require('@trycourier/courier');
 require('dotenv').config();
 
 const router = express.Router();
@@ -17,7 +18,7 @@ const upCache = async (key) => {
   reqCache[key] += 1;
 };
 
-const initCache = async(key) => {
+const initCache = async (key) => {
   reqCache[key] = 0;
 };
 
@@ -81,9 +82,44 @@ router.post("/verify", async function (req, res) {
   //     console.error(e);
   //   }
   // } else {
-    await upCache(idempotentKey);
-    res.send({ msg: 'email sent successfully.' });
+  await upCache(idempotentKey);
+  res.send({ msg: 'email sent successfully.' });
   // }
+});
+
+router.post("/verify-email-courier", async function (req, res) {
+  var email = req.headers['email'];
+  var otp = req.headers['otp'];
+  var auth = req.headers['authorization'];
+  var idempotentKey = req.headers['x-idempotency-key'];
+  var auth_key = `${process.env.AUTH}`;
+  var courier_auth_token = `${process.env.COURIER_EMAIL_AUTH}`
+  if (auth != auth_key) {
+    res.send({ msg: 'request not valid' });
+  };
+  let url = "https://api.courier.com/send";
+  let body = {
+    "message": {
+      "to": {
+        "email": email
+      },
+      "content": {
+        "title": "BOOM DAO email verification",
+        "body": 'Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.'
+      }
+    }
+  };
+
+  let response = await axios.post(url, body, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': idempotentKey,
+      'Accept': 'application/json',
+      'Authorization': courier_auth_token,
+    },
+  });
+  res.send({msg : "email sent"});
+
 });
 
 router.post("/verify-phone", async function (req, res) {
