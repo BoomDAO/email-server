@@ -17,7 +17,7 @@ const upCache = async (key) => {
   reqCache[key] += 1;
 };
 
-const initCache = () => {
+const initCache = (key) => {
   reqCache[key] = 0;
 };
 
@@ -42,7 +42,7 @@ router.post("/init-cache", async function (req, res) {
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
-  await initCacheCache(idempotentKey);
+  initCache(idempotentKey);
   res.send({ msg: '' });
 });
 
