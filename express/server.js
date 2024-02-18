@@ -6,7 +6,6 @@ const serverless = require('serverless-http');
 const app = express();
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const courier = require('@trycourier/courier');
 require('dotenv').config();
 
 const router = express.Router();
