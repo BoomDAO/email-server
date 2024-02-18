@@ -13,12 +13,9 @@ const router = express.Router();
 let reqCache = {};
 let success = {};
 
-const upCache = async (key) => {
-  reqCache[key] += 1;
-};
-
-const initCache = (key) => {
-  reqCache[key] = 0;
+const upCache = async(key) => {
+  reqCache[key] = (reqCache[key] && success[key] == undefined) ? (reqCache[key] + 1) : 1;
+  console.log(key + " : " + reqCache[key]);
 };
 
 router.get('/', (req, res) => {
@@ -35,17 +32,6 @@ router.post("/check-cache", function (req, res) {
   res.send(reqCache);
 });
 
-router.post("/init-cache", async function (req, res) {
-  var auth = req.headers['authorization'];
-  var idempotentKey = req.headers['x-idempotency-key'];
-  var auth_key = `${process.env.AUTH}`;
-  if (auth != auth_key) {
-    res.send({ msg: 'request not valid' });
-  };
-  initCache(idempotentKey);
-  res.send({ msg: '' });
-});
-
 router.post("/verify", async function (req, res) {
   var email = req.headers['email'];
   var otp = req.headers['otp'];
@@ -55,7 +41,7 @@ router.post("/verify", async function (req, res) {
   if (auth != auth_key) {
     res.send({ msg: 'request not valid' });
   };
-  if (reqCache[idempotentKey] >= 12) {
+  if (reqCache[idempotentKey] >= 4) {
     try {
       const apiKey = `${process.env.SENDGRID_API_KEY}`;
       const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
@@ -70,7 +56,7 @@ router.post("/verify", async function (req, res) {
       await sgMail
         .send(msg)
         .then(() => {
-          // reqCache[idempotentKey] = 0;
+          reqCache[idempotentKey] = 0;
           success[idempotentKey] = true;
           res.send({ msg: 'email sent successfully.' });
         })
