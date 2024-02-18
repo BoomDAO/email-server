@@ -150,26 +150,21 @@ router.post("/verify-phone", async function (req, res) {
   data.append('From', from);
   data.append('Body', "Your BOOM DAO verification code is " + otp + ". Do not share this with anyone.");
   const uniqueId = key;
-
-  if (reqCache[key] == undefined) {
-    try {
-      let response = await axios.post(url, data, {
-        auth: {
-          username: sid,
-          password: authToken,
-        },
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'I-Twilio-Idempotency-Token': uniqueId,
-        },
-      });
-      res.send({ msg: 'Message sent successfully' });
-    } catch (e) {
-      console.log(e);
-      res.send({ msg: "Message not send" });
-    }
-  } else {
+  try {
+    let response = await axios.post(url, data, {
+      auth: {
+        username: sid,
+        password: authToken,
+      },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'I-Twilio-Idempotency-Token': uniqueId,
+      },
+    });
     res.send({ msg: 'Message sent successfully' });
+  } catch (e) {
+    console.log(e);
+    res.send({ msg: "Message not send" });
   }
 });
 
