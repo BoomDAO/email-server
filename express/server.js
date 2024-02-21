@@ -20,46 +20,6 @@ router.post("/post-check", function (req, res) {
   res.send({ msg: 'server check passed' });
 });
 
-// router.post("/verify", async function (req, res) {
-//   var email = req.headers['email'];
-//   var otp = req.headers['otp'];
-//   var auth = req.headers['authorization'];
-//   var idempotentKey = req.headers['x-idempotency-key'];
-//   var auth_key = `${process.env.AUTH}`;
-//   if (auth != auth_key) {
-//     res.send({ msg: 'request not valid' });
-//   };
-// if (reqCache[idempotentKey] >= 12) {
-//   try {
-//     const apiKey = `${process.env.SENDGRID_API_KEY}`;
-//     const fromAddress = `${process.env.SENDGRID_FROM_EMAIL}`;
-//     sgMail.setApiKey(apiKey)
-//     const msg = {
-//       to: email,
-//       from: fromAddress,
-//       subject: 'BOOM DAO email verification',
-//       text: 'OTP Verification',
-//       html: '<strong>Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.</strong>',
-//     }
-//     await sgMail
-//       .send(msg)
-//       .then(() => {
-//         // reqCache[idempotentKey] = 0;
-//         success[idempotentKey] = true;
-//         res.send({ msg: 'email sent successfully.' });
-//       })
-//       .catch((error) => {
-//         res.send(error);
-//       })
-//   } catch (e) {
-//     console.error(e);
-//   }
-// } else {
-// await upCache(idempotentKey);
-// res.send({ msg: 'email sent successfully.' });
-// }
-// });
-
 router.post("/verify-email-courier", async function (req, res) {
   var email = req.headers['email'];
   var otp = req.headers['otp'];
@@ -95,41 +55,46 @@ router.post("/verify-email-courier", async function (req, res) {
 
 });
 
-// router.post("/verify-phone-courier", async function (req, res) {
-//   var phone = req.headers['phone'];
-//   var otp = req.headers['otp'];
-//   var auth = req.headers['authorization'];
-//   var idempotentKey = req.headers['x-idempotency-key'];
-//   var auth_key = `${process.env.AUTH}`;
-//   var courier_auth_token = `${process.env.COURIER_PHONE_AUTH}`
-//   if (auth != auth_key) {
-//     res.send({ msg: 'request not valid' });
-//   };
-//   let url = "https://api.courier.com/send";
-//   let body = {
-//     "message": {
-//       "to": {
-//         "phone_number": phone
-//       },
-//       "content": {
-//         "title": "BOOM DAO email verification",
-//         "body": 'Your BOOM DAO verification code is ' + otp + '. Do not share this with anyone.'
-//       }
-//     },
-//   };
+router.post("/verify-phone-courier", async function (req, res) {
+  var phone = req.headers['phone'];
+  var otp = req.headers['otp'];
+  var auth = req.headers['authorization'];
+  var idempotentKey = req.headers['x-idempotency-key'];
+  var auth_key = `${process.env.AUTH}`;
+  var courier_auth_token = `${process.env.COURIER_EMAIL_AUTH}`;
+  var template_id = `${process.env.COURIER_TEMPLATE_ID}`;
+  var brand_id = `${process.env.COURIER_BRAND_ID}`;
+  if (auth != auth_key) {
+    res.send({ msg: 'request not valid' });
+  };
+  let url = "https://api.courier.com/send";
+  console.log(phone);
+  console.log(idempotentKey);
+  let body = {
+    "message": {
+      "brand_id": brand_id,
+      "template": template_id,
+      "to": {
+        "phone_number": phone
+      },
+      "data": {
+        "otp": otp
+      }
+    }
+  };
 
-//   let response = await axios.post(url, body, {
-//     headers: {
-//       'Content-Type': 'application/json',
-//       'Idempotency-Key': idempotentKey,
-//       'Accept': 'application/json',
-//       'Authorization': courier_auth_token,
-//     },
-//   });
-//   console.log(response);
-//   res.send({msg : "sms sent"});
+  let response = await axios.post(url, body, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': idempotentKey,
+      'Accept': 'application/json',
+      'Authorization': courier_auth_token,
+    },
+  });
+  console.log(response);
+  res.send({ msg: "sms sent" });
 
-// });
+});
 
 router.post("/verify-phone", async function (req, res) {
   var phone = req.headers['to'];
